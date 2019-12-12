@@ -45,24 +45,49 @@ class MainActivity : AppCompatActivity() {
             val textView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.list_item, parent, false) as TextView
 
-            textView.setOnClickListener { v ->
-                AlertDialog.Builder(this@MainActivity)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("Blahblah.")
-                    .setMessage("Open this web address?")
-                    .setPositiveButton("Yes") { dialogInterface: DialogInterface, i: Int ->
-                    }
-                    .setNegativeButton("No") { dialogInterface: DialogInterface, i: Int ->
-                    }
-                    .show()
-            }
-
             return MyViewHolder(textView)
         }
 
         // Replace the contents of a view (invoked by the layout manager)
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-            holder.textView.text = services[position].serviceName
+            val service = services[position]
+
+            holder.textView.text = service.serviceName
+
+            holder.textView.setOnClickListener { v ->
+
+                nsdManager.resolveService(service, object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                        Log.e(TAG, "Resolve failed: $errorCode")
+                        AlertDialog.Builder(this@MainActivity)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setTitle("Error")
+                            .setMessage("Could not resolve service name to a network address and port.")
+                            .setNeutralButton("Ok", null)
+                            .show()
+                    }
+                    override fun onServiceResolved(service: NsdServiceInfo) {
+                        Log.e(TAG, "Resolve Succeeded. $service")
+
+                        val address =
+                            "http:/" + service.host + ":" + service.port +
+                            String(service.attributes["path"] ?: byteArrayOf(47), Charsets.UTF_8)
+
+                        AlertDialog.Builder(this@MainActivity)
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .setTitle("Open web address")
+                            .setMessage(address)
+                            .setPositiveButton("Yes") { dialogInterface: DialogInterface, i: Int ->
+                            }
+                            .setNegativeButton("No", null)
+                            .show()
+                    }
+                })
+
+
+            }
+
+
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -107,20 +132,8 @@ class MainActivity : AppCompatActivity() {
 
         override fun onServiceFound(service: NsdServiceInfo) {
             Log.d(TAG, "Service discovery success $service")
-
             services.add(service)
             runOnUiThread { viewAdapter.notifyDataSetChanged() }
-
-            /*nsdManager.resolveService(service, object : NsdManager.ResolveListener {
-                override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                    Log.e(TAG, "Resolve failed: $errorCode")
-                }
-                override fun onServiceResolved(service: NsdServiceInfo) {
-                    Log.e(TAG, "Resolve Succeeded. $service")
-                    services.add(service)
-                    runOnUiThread { viewAdapter.notifyDataSetChanged() }
-                }
-            })*/
         }
 
         override fun onServiceLost(service: NsdServiceInfo) {
