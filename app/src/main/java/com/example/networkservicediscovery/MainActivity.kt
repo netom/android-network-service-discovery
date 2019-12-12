@@ -1,5 +1,7 @@
 package com.example.networkservicediscovery
 
+// See: https://developer.android.com/training/connect-devices-wirelessly/nsd.html#kotlin
+
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -8,7 +10,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
@@ -18,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     //private val SERVICE_TYPE = "w0t?"
     private lateinit var nsdManager: NsdManager
 
-    private val services = (ArrayList<NsdServiceInfo>())
+    private val services = NetworkServiceList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

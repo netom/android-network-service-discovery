@@ -1,12 +1,11 @@
 package com.example.networkservicediscovery
 
-import android.net.nsd.NsdServiceInfo
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class NetworkServiceListAdapter(private val services: ArrayList<NsdServiceInfo>) :
+class NetworkServiceListAdapter(private val services: NetworkServiceList) :
     RecyclerView.Adapter<NetworkServiceListAdapter.MyViewHolder>() {
 
     // Provide a reference to the views for each data item

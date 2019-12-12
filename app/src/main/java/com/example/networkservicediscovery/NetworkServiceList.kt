@@ -5,19 +5,23 @@ import android.net.nsd.NsdServiceInfo
 class NetworkServiceList {
     private val services = (ArrayList<NsdServiceInfo>())
 
-    fun get(i: Int): NsdServiceInfo {
+    operator fun get(i: Int): NsdServiceInfo {
         return services[i]
     }
 
-    fun set(i: Int, service: NsdServiceInfo) {
-        services[i] = service;
-    }
-
     fun add(service: NsdServiceInfo) {
-
+        services.add(service)
     }
 
-    fun size(): Int {
-        return services.size
+    fun remove(service: NsdServiceInfo) {
+        for ((i,s) in services.withIndex()) {
+            if (s.serviceName == service.serviceName) {
+                services.removeAt(i)
+                break
+            }
+        }
     }
+
+    val size: Int
+        get() = services.size
 }
