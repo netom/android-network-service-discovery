@@ -1,20 +1,28 @@
-package com.example.networkservicediscovery
+package info.donotsavemy.networkservicediscovery
 
 // See: https://developer.android.com/training/connect-devices-wirelessly/nsd.html#kotlin
 
+import android.Manifest
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+
+const val PERMISSIONS_INTERNET = 0
 
 class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
@@ -24,7 +32,8 @@ class MainActivity : AppCompatActivity() {
     //private val SERVICE_TYPE = "w0t?"
     private lateinit var nsdManager: NsdManager
 
-    private val services = NetworkServiceList()
+    private val services =
+        NetworkServiceList()
 
     inner class NetworkServiceListAdapter(private val services: NetworkServiceList) :
         RecyclerView.Adapter<NetworkServiceListAdapter.MyViewHolder>() {
@@ -40,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         // Create new views (invoked by the layout manager)
         override fun onCreateViewHolder(parent: ViewGroup,
-                                        viewType: Int): NetworkServiceListAdapter.MyViewHolder {
+                                        viewType: Int): MyViewHolder {
             // create a new view
             val textView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.list_item, parent, false) as TextView
@@ -54,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
             holder.textView.text = service.serviceName
 
-            holder.textView.setOnClickListener { v ->
+            holder.textView.setOnClickListener { _ ->
 
                 nsdManager.resolveService(service, object : NsdManager.ResolveListener {
                     override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
@@ -77,7 +86,13 @@ class MainActivity : AppCompatActivity() {
                             .setIcon(android.R.drawable.ic_dialog_info)
                             .setTitle("Open web address")
                             .setMessage(address)
-                            .setPositiveButton("Yes") { dialogInterface: DialogInterface, i: Int ->
+                            .setPositiveButton("Yes") { _: DialogInterface, _: Int ->
+                                startActivity(
+                                    Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(address)
+                                    )
+                                )
                             }
                             .setNegativeButton("No", null)
                             .show()
@@ -116,8 +131,67 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
 
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.INTERNET)) {
+                AlertDialog.Builder(this@MainActivity)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle("I need to access the network")
+                    .setMessage(
+                        "This application by it's nature needs to access the local network. " +
+                        "Please grant me permission to access the network in the next dialog."
+                    )
+                    .setNeutralButton("Proceed") { _: DialogInterface, _: Int ->
+                        requestPermissionInternet()
+                    }
+                    .show()
+            } else {
+                requestPermissionInternet()
+            }
+        } else {
+            startNetworkServiceDiscovery()
+        }
+
+    }
+
+    private fun requestPermissionInternet() {
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_CONTACTS), PERMISSIONS_INTERNET)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        when (requestCode) {
+            PERMISSIONS_INTERNET -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle("Thanks")
+                        .setMessage("Thank you.")
+                        .setNeutralButton("You're welcome") { _: DialogInterface, _: Int ->
+                            startNetworkServiceDiscovery()
+                        }
+                        .show()
+                } else {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("Meh")
+                        .setMessage("Fine. But please note that you won't see any services.")
+                        .setNegativeButton("Fine", null)
+                        .setPositiveButton("Let me think again") { _: DialogInterface, _: Int ->
+                            requestPermissionInternet()
+                        }
+                        .show()
+                }
+                return
+            }
+            else -> {
+                // Ignore all other requests.
+            }
+        }
+    }
+
+    private fun startNetworkServiceDiscovery() {
+        nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
         nsdManager.discoverServices("_http._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
     }
 

@@ -1,4 +1,4 @@
-package com.example.networkservicediscovery
+package info.donotsavemy.networkservicediscovery
 
 import android.net.nsd.NsdServiceInfo
 
