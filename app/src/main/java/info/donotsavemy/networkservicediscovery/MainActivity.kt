@@ -114,8 +114,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         viewManager = LinearLayoutManager(this)
-
-        viewManager = LinearLayoutManager(this)
         viewAdapter = NetworkServiceListAdapter(services)
 
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView).apply {
@@ -222,7 +220,6 @@ class MainActivity : AppCompatActivity() {
 
         override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
             Log.e(TAG, "Discovery failed: Error code:$errorCode")
-            nsdManager.stopServiceDiscovery(this)
         }
 
         override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
