@@ -191,6 +191,9 @@ class MainActivity : AppCompatActivity() {
     private fun startNetworkServiceDiscovery() {
         nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
         nsdManager.discoverServices("_http._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        //nsdManager.discoverServices("_services._dns-sd._udp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        //nsdManager.discoverServices("_udisks-ssh._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        //nsdManager.discoverServices("_workstation-ssh._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
     }
 
     // Instantiate a new DiscoveryListener
