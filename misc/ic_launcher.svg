@@ -15,7 +15,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="rajz.svg">
+   sodipodi:docname="ic_launcher.svg"
+   inkscape:export-filename="/home/netom/AndroidstudioProjects/NetworkServiceDiscovery/misc/ic_launcher_large.png"
+   inkscape:export-xdpi="130.048"
+   inkscape:export-ydpi="130.048">
   <defs
      id="defs2">
     <marker
@@ -195,8 +198,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="185.47144"
-     inkscape:cy="152.16359"
+     inkscape:cx="60.97014"
+     inkscape:cy="150.14328"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"

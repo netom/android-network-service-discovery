@@ -28,12 +28,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
-
-    //private val SERVICE_TYPE = "w0t?"
     private lateinit var nsdManager: NsdManager
 
     private val services =
         NetworkServiceList()
+
+    private val serviceTypeDiscoveryListeners = HashMap<String, NsdManager.DiscoveryListener>()
 
     inner class NetworkServiceListAdapter(private val services: NetworkServiceList) :
         RecyclerView.Adapter<NetworkServiceListAdapter.MyViewHolder>() {
@@ -190,44 +190,74 @@ class MainActivity : AppCompatActivity() {
 
     private fun startNetworkServiceDiscovery() {
         nsdManager = (getSystemService(Context.NSD_SERVICE) as NsdManager)
-        nsdManager.discoverServices("_http._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-        //nsdManager.discoverServices("_services._dns-sd._udp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-        //nsdManager.discoverServices("_udisks-ssh._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-        //nsdManager.discoverServices("_workstation-ssh._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        //nsdManager.discoverServices("_http._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        nsdManager.discoverServices("_services._dns-sd._udp", NsdManager.PROTOCOL_DNS_SD, serviceTypeDiscoveryListener)
     }
 
-    // Instantiate a new DiscoveryListener
-    private val discoveryListener = object : NsdManager.DiscoveryListener {
-        private val TAG = "DISCOVERY_LISTENER"
+    private val serviceTypeDiscoveryListener = object : NsdManager.DiscoveryListener {
+        private val TAG = "STDL"
 
-        // Called as soon as service discovery begins.
         override fun onDiscoveryStarted(regType: String) {
-            Log.d(TAG, "Service discovery started")
+            Log.d(TAG, "Service type discovery started")
         }
 
         override fun onServiceFound(service: NsdServiceInfo) {
-            Log.d(TAG, "Service discovery success $service")
-            services.add(service)
-            runOnUiThread { viewAdapter.notifyDataSetChanged() }
+            Log.d(TAG, "Service type found $service")
+
+            val listener = object : NsdManager.DiscoveryListener {
+                private val TAG = "SERVICE"
+
+                override fun onDiscoveryStarted(regType: String) {
+                    Log.d(TAG, "Service discovery started")
+                }
+
+                override fun onServiceFound(service: NsdServiceInfo) {
+                    Log.d(TAG, "Service found $service")
+                    services.add(service)
+                    runOnUiThread { viewAdapter.notifyDataSetChanged() }
+                }
+
+                override fun onServiceLost(service: NsdServiceInfo) {
+                    Log.e(TAG, "service lost: $service")
+                    services.remove(service)
+                    runOnUiThread { viewAdapter.notifyDataSetChanged() }
+                }
+
+                override fun onDiscoveryStopped(serviceType: String) {
+                    Log.i(TAG, "Service discovery stopped: $serviceType")
+                }
+
+                override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    Log.e(TAG, "Service discovery failed: Error code: $errorCode")
+                }
+
+                override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    Log.e(TAG, "Service discovery failed: Error code: $errorCode")
+                }
+            }
+
+            val fullname = service.serviceName + "." + service.serviceType.replace("""local\.$""".toRegex(), "")
+
+            serviceTypeDiscoveryListeners.set(service.serviceName, listener)
+
+            nsdManager.discoverServices(fullname, NsdManager.PROTOCOL_DNS_SD, listener)
         }
 
         override fun onServiceLost(service: NsdServiceInfo) {
-            Log.e(TAG, "service lost: $service")
-            services.remove(service)
-            runOnUiThread { viewAdapter.notifyDataSetChanged() }
+            Log.e(TAG, "service type lost: $service")
+            nsdManager.stopServiceDiscovery(serviceTypeDiscoveryListeners[service.serviceName])
         }
 
         override fun onDiscoveryStopped(serviceType: String) {
-            Log.i(TAG, "Discovery stopped: $serviceType")
+            Log.i(TAG, "Service type discovery stopped: $serviceType")
         }
 
         override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-            Log.e(TAG, "Discovery failed: Error code:$errorCode")
+            Log.e(TAG, "Service type discovery failed: Error code: $errorCode")
         }
 
         override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
-            Log.e(TAG, "Discovery failed: Error code:$errorCode")
-            nsdManager.stopServiceDiscovery(this)
+            Log.e(TAG, "Service type discovery failed: Error code: $errorCode")
         }
     }
 
